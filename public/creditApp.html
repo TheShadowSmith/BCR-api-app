@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>BCR Report System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.css">
+    <link rel="stylesheet" href="https://cdn.corvidor.com/css/spacing.css">
+</head>
+
+<body>
+    <div id="app">
+        <div class="ui container pt-4">
+            <div class="ui secondary menu">
+                <a href="index.html" class="item">
+                    <i class="chevron left icon"></i>
+                    Back to Report Search
+                </a>
+                <div class="right menu">
+                    <a @click="config.configureWindowVisible = !config.configureWindowVisible" class="ui item">
+                        <i class="wrench link icon"></i>
+                        Configurations
+                    </a>
+                </div>
+            </div>
+            <div class="ui divider"></div>
+        </div>
+        <div v-if="config.configureWindowVisible" class="ui container mb-3">
+            <div class="ui segment">
+                <div class="ui large header">Configurations</div>
+                <div class="ui equal width form">
+                    <div class="fields">
+                        <div class="field">
+                            <label>Username</label>
+                            <input v-model="config.user" type="text" placeholder="Username">
+                        </div>
+                        <div class="field">
+                            <label>Password</label>
+                            <input v-model="config.password" type="password">
+                        </div>
+                        <div class="field">
+                            <label>Branch</label>
+                            <input v-model="config.branch" type="text" placeholder="Branch">
+                        </div>
+                    </div>
+                    <div class="fields">
+                        <div class="field">
+                            <label>Test Mode</label>
+                            <select v-model="config.testMode" class="ui search dropdown">
+                                <option value="true">True</option>
+                                <option value="false">False</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Search Engine</label>
+                            <select v-model="config.searchEngine" class="ui search dropdown">
+                                <option value="311">Dun & Bradstreet</option>
+                                <option value="60">Experian</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Report Type</label>
+                            <select v-model="config.reportId" class="ui search dropdown">
+                                <option value="60">Advantage Pro</option>
+                                <option value="65">Business Credit Report Pro</option>
+                                <option value="64">Business Credit Report Plus</option>
+                                <option value="311">Trade Plus</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button @click="config.configureWindowVisible = false;" class="positive ui button">Store Configurations</button>
+                    <button @click="config.configureWindowVisible = false;" class="ui button">Close</button>
+                </div>
+            </div>
+        </div>
+        <div class="ui container pb-4">
+            <div class="ui top attached menu">
+                <a @click="creditAppEditorActive = true" class="item">
+                    <i class="code icon"></i>
+                    HTML
+                </a>
+                <a @click="creditAppEditorActive = false" class="item">
+                    <i class="eye icon"></i>
+                    Preview
+                </a>
+            </div>
+            <div class="ui bottom attached segment">
+                <div class="ui form">
+                    <div class="field">
+                        <textarea v-if="creditAppEditorActive" v-model="creditAppHtml"></textarea>
+                    </div>
+                </div>
+                <div v-if="!creditAppEditorActive" v-html="creditAppHtml"></div>
+            </div>
+        </div>
+        <div id="searchLoadState" class="ui inverted dimmer">
+            <div class="ui text loader">Searching the bureau database...</div>
+        </div>
+        <div id="generationLoadState" class="ui inverted dimmer">
+            <div class="ui text loader">Generating your report...</div>
+        </div>
+        <div id="retrievalLoadState" class="ui inverted dimmer">
+            <div class="ui text loader">Getting your report...</div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="creditApp.js"></script>
+</body>
+
+</html>

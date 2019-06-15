@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>BCR Report System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.css">
+    <link rel="stylesheet" href="https://cdn.corvidor.com/css/spacing.css">
+</head>
+
+<body>
+    <div id="app">
+        <div class="ui container pt-4">
+            <div class="ui secondary menu">
+                <a @click="searchFormVisible = !searchFormVisible" class="item">
+                    <i class="search link icon"></i>
+                    Report Search
+                </a>
+                <a @click="reportHistorySearchFormVisible = !reportHistorySearchFormVisible" class="item">
+                    <i v-if="reportHistorySearchFormVisible" class="folder open outline icon"></i>
+                    <i v-else class="folder outline link icon"></i>
+                    Report Archives
+                </a>
+                <div class="right menu">
+                    <a href="creditApp.html" class="ui item">
+                        <i class="file alternate outline icon"></i>
+                        Credit App Builder
+                    </a>
+                    <a @click="config.configureWindowVisible = !config.configureWindowVisible" class="ui item">
+                        <i class="wrench link icon"></i>
+                        Configurations
+                    </a>
+                </div>
+            </div>
+            <div class="ui divider"></div>
+        </div>
+        <div v-if="config.configureWindowVisible" class="ui container mb-3">
+            <div class="ui segment">
+                <div class="ui large header">Configurations</div>
+                <div class="ui equal width form">
+                    <div class="fields">
+                        <div class="field">
+                            <label>Username</label>
+                            <input v-model="config.user" type="text" placeholder="Username">
+                        </div>
+                        <div class="field">
+                            <label>Password</label>
+                            <input v-model="config.password" type="password">
+                        </div>
+                        <div class="field">
+                            <label>Branch</label>
+                            <input v-model="config.branch" type="text" placeholder="Branch">
+                        </div>
+                    </div>
+                    <div class="fields">
+                        <div class="field">
+                            <label>Test Mode</label>
+                            <select v-model="config.testMode" class="ui search dropdown">
+                                <option value="true">True</option>
+                                <option value="false">False</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Search Engine</label>
+                            <select v-model="config.searchEngine" class="ui search dropdown">
+                                <option value="311">Dun & Bradstreet</option>
+                                <option value="60">Experian</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Report Type</label>
+                            <select v-model="config.reportId" class="ui search dropdown">
+                                <option value="60">Advantage Pro</option>
+                                <option value="65">Business Credit Report Pro</option>
+                                <option value="64">Business Credit Report Plus</option>
+                                <option value="311">Trade Plus</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button @click="config.configureWindowVisible = false;" class="positive ui button">Store Configurations</button>
+                    <button @click="config.configureWindowVisible = false;" class="ui button">Close</button>
+                </div>
+            </div>
+        </div>
+        <div class="ui container pb-4">
+            <div v-if="searchFormVisible" class="ui segment">
+                <div class="ui large header">Report Search</div>
+                <div class="ui equal width form">
+                    <div class="fields">
+                        <div class="field">
+                            <label>Company Name</label>
+                            <input v-model="companyName" type="text" placeholder="Company Name">
+                        </div>
+                        <div class="field">
+                            <label>City</label>
+                            <input v-model="companyCity" type="text" placeholder="City">
+                        </div>
+                    </div>
+                    <div class="fields">
+                        <div class="field">
+                            <label>State</label>
+                            <input v-model="companyState" type="text" placeholder="Company State">
+                        </div>
+                        <div class="field">
+                            <label>Company Zip Code</label>
+                            <input v-model="companyZip" type="text" placeholder="Company Zip Code">
+                        </div>
+                    </div>
+                    <button @click="getSearchResults" class="positive ui button" type="submit">Search for a report <span v-if="!companyName == ''">on {{ companyName }}</span></button>
+                    <button @click="searchFormVisible = false;" class="ui button">Close</button>
+                </div>
+            </div>
+            <div v-if="reportHistorySearchFormVisible" class="ui segment">
+                <div class="ui large header">Report Archive Search</div>
+                <div class="ui equal width form">
+                    <div class="fields">
+                        <div class="field">
+                            <label>Request ID</label>
+                            <input v-model="requestID" type="text" placeholder="Request ID">
+                        </div>
+                    </div>
+                    <button @click="getReportData" class="positive ui button">Retrieve report <span v-if="!requestID == ''"># {{ requestID }}</span> from your archives</button>
+                    <button @click="reportHistorySearchFormVisible = false;" class="ui button">Close</button>
+                </div>
+            </div>
+            <div v-if="searchResultsVisible" class="ui segment">
+                <div class="ui relaxed divided list">
+                    <div v-for="Company in searchResults.Companies" class="item">
+                        <div class="right floated content">
+                            <div @click="getReport(searchResults.SearchId, Company.CompanyId, Company.BusinessName, Company.StreetAddress, Company.City, Company.State, Company.Zip)" class="ui button">Pull this report</div>
+                        </div>
+                        <div class="content">
+                            <p class="header">{{ Company.BusinessName }}</p>
+                            <div class="description">{{ Company.StreetAddress }}, {{ Company.City }}, {{ Company.State }} {{ Company.Zip }}</div>
+                            <div v-if="config.searchEngine == 60" class="description">
+                                <strong>In this report:</strong> {{ Company.NumberOfTradeLines }} trade <span v-if="Company.NumberOfTradeLines == 1">line</span><span v-else>lines</span>, <span v-if="Company.PublicRecordDataIndicator == 'Y'">Public Record Data,</span> <span v-if="Company.CollectionIndicator == 'Y'">Collection Data,</span> <span v-if="Company.UCCIndicator">UCC Info</span>
+                            </div>
+                            <div v-else class="description">
+                                <strong>DUNS#:</strong> {{ Company.CompanyId }} - <strong>Location Type:</strong> {{ Company.LocationType }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div v-if="reportPreviewVisible" class="ui fluid card">
+                <div class="content">
+                    <div class="header">{{ reportData.companyInfo.companyName }}</div>
+                </div>
+                <div class="content">
+                    <h4 class="ui sub header">{{ reportData.companyInfo.companyAddress }} - {{ reportData.companyInfo.companyPhone }}</h4>
+                    <div class="ui relaxed divided list">
+                        <div class="item">
+                            <div class="content">
+                                <p><strong>Credit Logic Score:</strong> {{ reportData.companyAnalytics.creditLogicScore }}</p>
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="content">
+                                <p><strong>Data Depth Score:</strong> {{ reportData.companyAnalytics.dataDepthScore }}</p>
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="content">
+                                <p><strong>MultiMax Credit Guideline:</strong> {{ reportData.companyAnalytics.multiMax }}</p>
+                            </div>
+                        </div>
+                        <div class="item">
+                            <div class="content">
+                                <p><strong>Business Failure Asssessment:</strong> {{ reportData.companyAnalytics.businessFailureAssessment }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="extra content">
+                    <a :href="reportData.reportURL" class="ui primary button" target="_blank">View Full Report</a>
+                </div>
+            </div>
+            {{ tempData }}
+        </div>
+        <div id="searchLoadState" class="ui inverted dimmer">
+            <div class="ui text loader">Searching the bureau database...</div>
+        </div>
+        <div id="generationLoadState" class="ui inverted dimmer">
+            <div class="ui text loader">Generating your report...</div>
+        </div>
+        <div id="retrievalLoadState" class="ui inverted dimmer">
+            <div class="ui text loader">Getting your report...</div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="main.js"></script>
+</body>
+
+</html>
