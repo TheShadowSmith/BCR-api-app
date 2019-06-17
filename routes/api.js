@@ -4,15 +4,42 @@ const rp = require('request-promise');
 const $ = require('cheerio');
 const unirest = require('unirest');
 
-// Searches using Company Name, Company DBA, Company Address, and Zip Code
-router.get('/search/:user/:password/:branch/:testMode/:searchEngine/:companyName/:companyCity/:companyState/:companyZip', (req, res) => {
+// Authenticate Credentials
+router.get('/login/:user/:password', (req, res) => {
+    
+    const user = req.params.user;
+    const password = req.params.password;
+    
+    // GetUserBranches POST request to the BCR API
+    var bcrAPI = unirest("POST", "https://reports.businesscreditreports.com/ReportWS/GetUserBranches");
+    
+    // GetUserBranches POST request Headers
+    bcrAPI.headers({
+        "Content-Type": "application/x-www-form-urlencoded"
+    });
+    
+    // GetUserBranches POST request Body
+    bcrAPI.form({
+        "WSAccountName": user,
+        "WSPassword": password,
+        "UserId": user
+    });
+    
+    // Send the Results to the App
+    bcrAPI.end((response) => {
+        res.send(response.body);
+    });
+    
+});
+
+// Searches Experian using Company Name, Company DBA, Company Address, and Zip Code
+router.get('/experianSearch/:user/:password/:branch/:testMode/:companyName/:companyCity/:companyState/:companyZip', (req, res) => {
     
     // captures the Company Name and Zip Code parameters passed through the URL
     const user = req.params.user;
     const password = req.params.password;
     const branch = req.params.branch;
     const testMode = req.params.testMode;
-    const searchEngine = req.params.searchEngine;
     const company = req.params.companyName;
     const city = req.params.companyCity;
     const state = req.params.companyState;
@@ -36,7 +63,49 @@ router.get('/search/:user/:password/:branch/:testMode/:searchEngine/:companyName
         "City": city,
         "State": state,
         "Zip": zip,
-        "ReportId": searchEngine,
+        "ReportId": 60,
+        "TestMode": testMode
+    });
+    
+    // Send the Search Results to the App
+    bcrAPI.end((response) => {
+        res.send(response.body);
+    });
+    
+});
+
+// Searches Dun & Bradstreet using Company Name, Company DBA, Company Address, and Zip Code
+router.get('/dnbSearch/:user/:password/:branch/:testMode/:companyName/:companyCity/:companyState/:companyZip', (req, res) => {
+    
+    // captures the Company Name and Zip Code parameters passed through the URL
+    const user = req.params.user;
+    const password = req.params.password;
+    const branch = req.params.branch;
+    const testMode = req.params.testMode;
+    const company = req.params.companyName;
+    const city = req.params.companyCity;
+    const state = req.params.companyState;
+    const zip = req.params.companyZip;
+    
+    // USASearch POST request to the BCR API
+    var bcrAPI = unirest("POST", "https://reports.businesscreditreports.com/ReportWS/USASearch");
+
+    // USASearch POST request Headers
+    bcrAPI.headers({
+        "Content-Type": "application/x-www-form-urlencoded"
+    });
+
+    // USASearch POST request Body
+    bcrAPI.form({
+        "WSAccountName": user,
+        "WSPassword": password,
+        "UserId": user,
+        "Branch": branch,
+        "Company": company,
+        "City": city,
+        "State": state,
+        "Zip": zip,
+        "ReportId": 311,
         "TestMode": testMode
     });
     
